@@ -29,8 +29,22 @@ def normalize_isbn13(raw: str) -> str:
     if len(isbn) != 13 or not isbn.isdigit():
         raise ValueError("isbn must contain exactly 13 digits")
     # TODO: verify the ISBN-13 check digit (see SPEC.md)
-    return isbn
+    # ******************************************************************
+    # Calculate the sum of 1st 12 digits using (1 & 3) alternate weights
+    total = sum(
+        int(digit) * (1 if i % 2 == 0 else 3)
+        for i, digit in enumerate(isbn[:12])
+    )
 
+    # Calculate expected check digit: (10 - (sum) % 10) % 10
+    check_digit = (10 - (total % 10)) % 10
+
+    # Compare with actual 13th digit
+    if check_digit != int(isbn[12]):
+        raise ValueError("Invalid ISBN-13 checksum") 
+    
+    return isbn
+    # ******************************************************************************
 
 # --- Health -----------------------------------------------------------------------------
 
@@ -107,9 +121,12 @@ class MemberCreate(BaseModel):
     @classmethod
     def normalize_email(cls, value: str) -> str:
         """Validate and normalize the email address."""
-        if not EMAIL_PATTERN.match(value):
+        # *******************************************************
+        cleaned = value.strip().lower()
+        if not EMAIL_PATTERN.match(cleaned):
             raise ValueError("email is not valid")
-        return value
+        return cleaned
+        # ***********************************************************
 
 
 class MemberOut(BaseModel):

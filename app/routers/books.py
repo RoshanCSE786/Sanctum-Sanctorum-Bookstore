@@ -1,16 +1,16 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.schemas import BookCreate, BookOut, BookPage, BookSort
+from app.schemas import BookCreate, BookOut, BookPage, BookSort, BookUpdate
 from app.services import books as service
 
 router = APIRouter(prefix="/books", tags=["books"])
 
 
-@router.post("", response_model=BookOut, status_code=201)
+@router.post("", response_model=BookOut, status_code=status.HTTP_201_CREATED)
 def create_book(data: BookCreate, db: Session = Depends(get_db)):
     return service.create_book(db, data)
 
@@ -42,5 +42,9 @@ def list_books(
 def get_book(book_id: int, db: Session = Depends(get_db)):
     return service.get_book(db, book_id)
 
-
+# **************************************************************
 # TODO: expose PATCH /books/{book_id} (see SPEC.md)
+@router.patch("/{book_id}", response_model=BookOut)
+def update_book(book_id: int, data: BookUpdate, db: Session = Depends(get_db)):
+    return service.update_book(db, book_id, data)
+# ****************************************************************
