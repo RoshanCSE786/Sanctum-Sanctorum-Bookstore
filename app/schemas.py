@@ -175,7 +175,7 @@ class OrderCreate(BaseModel):
             if item.book_id in seen_book_ids:
                 raise ValueError(f"Duplicate book_id {item.book_id} in items")
             seen_book_ids.add(item.book_id)
-            return value
+        return value
         
     # *************************************************************************
 
