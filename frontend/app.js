@@ -1291,6 +1291,8 @@ async function loadLoans() {
   ensureBooks(l.items.map((x) => x.book_id), renderLoans);
 }
 
+// In renderLoans() (Action Button Replacement) because Return button have no exact action
+// <td class="actions">${returned ? '' : `<button type="button" class="btn ${overdue ? 'btn-primary' : 'btn-secondary'} btn-sm" data-action="loan-return" data-id="${loan.id}" aria-label="Return ${esc(bookLabel(loan.book_id))}">Return</button>`}</td>
 function renderLoans() {
   const l = state.loans;
   const el = $('#loans-body');
@@ -1312,7 +1314,8 @@ function renderLoans() {
       <td>${loan.returned_at ? fmtDate(loan.returned_at) : '—'}</td>
       <td><span class="badge badge-${esc(loan.status)}">${esc(loan.status)}</span></td>
       <td class="num">${returned ? fmtMoney(loan.late_fee_cents ?? 0) : '—'}</td>
-      <td class="actions">${returned ? '' : `<button type="button" class="btn ${overdue ? 'btn-primary' : 'btn-secondary'} btn-sm" data-action="loan-return" data-id="${loan.id}" aria-label="Return ${esc(bookLabel(loan.book_id))}">Return</button>`}</td>
+      <td class="actions">${returned ? '' : `<button type="button" class="btn ${overdue ? 'btn-primary' : 'btn-secondary'} btn-sm" onclick="window.returnLoan(${loan.id}, this)" aria-label="Return ${esc(bookLabel(loan.book_id))}">Return</button>`}</td>
+      
     </tr>`;
   }).join('');
   el.innerHTML = `<div class="table-wrap"><table class="table">
@@ -1321,7 +1324,7 @@ function renderLoans() {
     <tbody>${rows}</tbody></table></div>`;
 }
 
-async function returnLoan(id, button) {
+window.returnLoan = async function (id, button) {
   setBusy(button, true);
   try {
     const loan = await api(`/loans/${id}/return`, { method: 'POST', context: `Returning loan #${id}` });
@@ -1333,12 +1336,19 @@ async function returnLoan(id, button) {
       timeout: fee > 0 ? 9000 : undefined,
     });
     state.catalog.loaded = false;
-    loadLoans();
+
+    // Reset status filter so the newly returned book stays visible in the table
+    const statusSelect = $('#loan-status');
+    if (statusSelect) statusSelect.value = '';
+    
+    await loadLoans();
   } catch (err) {
     if (button.isConnected) setBusy(button, false);
     if (err.status === 409) loadLoans();
   }
 }
+
+
 
 /* =========================================================================
    Reports
