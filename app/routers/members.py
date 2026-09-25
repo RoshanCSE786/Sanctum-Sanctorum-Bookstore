@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.clock import get_now
 from app.db import get_db
-from app.schemas import LoanOut, LoanStatus, MemberCreate, MemberOut, MemberStats, OrderOut
+from app.schemas import LoanOut, LoanStatus, MemberCreate, MemberOut, MemberStats, OrderOut, MemberPage
 from app.services import loans as loan_service
 from app.services import members as service
 
@@ -41,3 +41,13 @@ def list_member_loans(
     now: datetime = Depends(get_now),
 ):
     return loan_service.list_member_loans(db, member_id, now, status)
+
+# Adding Endpoint to handle GET /members
+@router.get("", response_model = MemberPage)
+def list_members(
+    limit: int = Query(20, ge = 1, le =100),
+    offset: int = Query(0, ge = 0),
+    db: Session = Depends(get_db),
+):
+    """List all registered members with limit/offset pagination."""
+    return service.list_members(db, limit = limit, offset = offset)

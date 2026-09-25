@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.models import Member, MemberTier, Order, Loan
 from app.schemas import MemberCreate, MemberStats
 
+from app.schemas import MemberPage
+
 # Tiers from lowest to highest; a member's rank is their index in this list.
 TIER_ORDER: List[str] = [
     MemberTier.APPRENTICE.value,
@@ -130,3 +132,25 @@ def get_member_stats(db: Session, member_id: int, now: datetime) -> MemberStats:
         late_fees_cents = late_fees_cents,
     )
     # *********************************************************
+
+# Adding a function that calculates total rows in the members table and loads a paginated slice ordered by id ascending.
+def list_members(db: Session, limit: int = 20, offset: int = 0) -> MemberPage:
+    """Return a paginated list of members present in the database"""
+    # 1. Count the total members present in the database
+    total = db.scalar(select(func.count()).select_from(Member)) or 0
+
+    # 2. Retrieve only the requested slice
+    members = db.scalars(
+        select(Member)
+        .order_by(Member.id.asc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+
+    # Return the structured page
+    return MemberPage(
+        items = list(members),
+        total = total,
+        limit = limit,
+        offset = offset,
+    )

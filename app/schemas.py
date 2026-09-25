@@ -147,6 +147,14 @@ class MemberStats(BaseModel):
     overdue_loans: int
     late_fees_cents: int
 
+# ***********************************************************************
+# Impleted Optional Task: `GET /members` endpoint with pagination
+class MemberPage(BaseModel):
+    items: List[MemberOut]
+    total: int
+    limit: int
+    offset: int
+# ***********************************************************************
 
 # --- Orders -----------------------------------------------------------------------------
 
